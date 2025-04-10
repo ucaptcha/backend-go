@@ -1,0 +1,7 @@
+mode: "redis"  # or "redis"
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+key_length: 1536
+key_rotation_interval: "24h"
