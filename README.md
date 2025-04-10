@@ -1,6 +1,6 @@
 # μCaptcha Backend
 
-A example backend of the μCaptcha written in Go.
+A backend implementation of the μCaptcha system written in Go.
 
 ## Installation
 
