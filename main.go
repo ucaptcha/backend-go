@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"strconv"
 	"time"
 
 	"github.com/ucaptcha/backend-go/challenge"
@@ -11,7 +12,7 @@ import (
 )
 
 func main() {
-	if err := config.LoadConfig("config.example.yaml"); err != nil {
+	if err := config.LoadConfig("config.yaml"); err != nil {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
@@ -37,12 +38,12 @@ func main() {
 			}
 			keys.AddKey(newKey)
 			log.Println("RSA keys rotated.")
-			// In a real system, you might need to handle old keys for ongoing challenges.
+			// TODO: handle old keys for ongoing challenges.
 		}
 	}()
 
 	router := server.SetupRouter()
-	if err := router.Run(":8080"); err != nil {
+	if err := router.Run(config.GlobalConfig.Host + ":" + strconv.Itoa(config.GlobalConfig.Port)); err != nil {
 		log.Fatalf("Failed to run server: %v", err)
 	}
 }

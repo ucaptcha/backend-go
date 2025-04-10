@@ -13,10 +13,12 @@ type RedisConfig struct {
 }
 
 type Config struct {
-	Mode               string        `mapstructure:"mode"`
-	Redis              RedisConfig   `mapstructure:"redis"`
-	KeyLength          int           `mapstructure:"key_length"`
+	Mode                string        `mapstructure:"mode"`
+	Redis               RedisConfig   `mapstructure:"redis"`
+	KeyLength           int           `mapstructure:"key_length"`
 	KeyRotationInterval time.Duration `mapstructure:"key_rotation_interval"`
+	Port                int           `mapstructure:"port"`
+	Host                string        `mapstructure:"host"`
 }
 
 var GlobalConfig Config
