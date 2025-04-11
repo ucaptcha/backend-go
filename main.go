@@ -16,11 +16,18 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	initialKey, err := keys.GenerateRSAKey(config.GlobalConfig.KeyLength)
-	if err != nil {
-		log.Fatalf("Failed to generate initial key: %v", err)
+	keyPoolSize := config.GlobalConfig.KeyPoolSize
+
+	// Generate initial keys
+	for range keyPoolSize {
+		initialKey, err := keys.GenerateRSAKey(config.GlobalConfig.KeyLength)
+		if err != nil {
+			log.Fatalf("Failed to generate initial key: %v", err)
+		}
+		keys.AddKey(initialKey)
 	}
-	keys.AddKey(initialKey)
+
+	log.Printf("Initialized a key pool with size %d", keyPoolSize)
 
 	challenge.InitializeStorage()
 
@@ -30,15 +37,16 @@ func main() {
 		defer ticker.Stop()
 
 		for range ticker.C {
-			log.Println("Rotating RSA keys...")
+			log.Println("Generating a new RSA key...")
 			newKey, err := keys.GenerateRSAKey(config.GlobalConfig.KeyLength)
 			if err != nil {
 				log.Printf("Failed to generate new key: %v", err)
 				continue
 			}
 			keys.AddKey(newKey)
-			log.Println("RSA keys rotated.")
-			// TODO: handle old keys for ongoing challenges.
+			log.Println("RSA keys generated.")
+			keys.RemoveOldKey()
+			log.Println("Removed an old key.")
 		}
 	}()
 

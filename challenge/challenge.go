@@ -63,7 +63,7 @@ func VerifyChallenge(id string, yStr string) int8 {
 	if err != nil {
 		return 2 // Challenge not found
 	}
-	defer globalStorage.Delete(id) // Delete the challenge after verification
+	//defer globalStorage.Delete(id) // Delete the challenge after verification
 
 	y := new(big.Int)
 	y, ok := y.SetString(yStr, 10)
@@ -74,7 +74,7 @@ func VerifyChallenge(id string, yStr string) int8 {
 	pPrime := new(big.Int).Div(new(big.Int).Sub(challenge.P, big.NewInt(1)), big.NewInt(2))
 	qPrime := new(big.Int).Div(new(big.Int).Sub(challenge.Q, big.NewInt(1)), big.NewInt(2))
 
-	// Parallel computation of exponents modulo p and modulo q
+	// Computation of exponents modulo p and modulo q
 	eP := new(big.Int).Exp(big.NewInt(2), big.NewInt(challenge.T), pPrime)
 	eQ := new(big.Int).Exp(big.NewInt(2), big.NewInt(challenge.T), qPrime)
 

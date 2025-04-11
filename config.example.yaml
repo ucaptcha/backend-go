@@ -4,6 +4,7 @@ redis:
   password: ""
   db: 0
 key_length: 1536
-key_rotation_interval: "24h"
+key_rotation_interval: "12m"
+key_pool_size: 20
 port: 8080
 host: "0.0.0.0"

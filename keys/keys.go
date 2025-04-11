@@ -3,9 +3,13 @@ package keys
 import (
 	"crypto/rand"
 	"crypto/rsa"
+	"log"
 	"math/big"
+	mrand "math/rand"
 	"sync"
 	"time"
+
+	"github.com/ucaptcha/backend-go/config"
 )
 
 type RSAComponents struct {
@@ -47,11 +51,23 @@ func AddKey(key *KeyPair) {
 func GetActiveKey() *KeyPair {
 	keyMutex.RLock()
 	defer keyMutex.RUnlock()
-	if len(activeKeys) > 0 {
-		return activeKeys[0] // For now, just return the first active key
+	if len(activeKeys) == 0 {
+		key, err := GenerateRSAKey(config.GlobalConfig.KeyLength)
+		if err != nil {
+			return nil
+		}
+		AddKey(key)
+		log.Println("No key found. Generated a new key.")
+		return key
 	}
-	return nil
+	randomIndex := mrand.Intn(len(activeKeys))
+	return activeKeys[randomIndex]
 }
 
-// In a real scenario, you'd have a background process to rotate keys
-// based on the configuration. This is a simplified example.
+func RemoveOldKey() {
+	keyMutex.Lock()
+	defer keyMutex.Unlock()
+	if len(activeKeys) > 0 {
+		activeKeys = activeKeys[1:]
+	}
+}

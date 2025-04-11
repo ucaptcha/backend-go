@@ -105,6 +105,37 @@ or:
 }
 ```
 
+## Performance
+
+Tested on M2 MacBook Air (16GB):
+
+### `POST /challenge/`
+
+```
+  16 threads and 1000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency     1.61ms    2.33ms  59.91ms   90.53%
+    Req/Sec    18.64k    12.45k   49.19k    54.24%
+  2977589 requests in 20.10s, 320.88MB read
+  Socket errors: connect 755, read 72, write 0, timeout 0
+Requests/sec: 148134.29
+Transfer/sec:     15.96MB
+```
+
+
+### `POST /challenge/:id/validation`
+
+```
+  16 threads and 1000 connections
+  Thread Stats   Avg      Stdev     Max   +/- Stdev
+    Latency    34.73ms   10.04ms 209.87ms   79.99%
+    Req/Sec   623.34    332.84     2.04k    80.63%
+  409586 requests in 1.00m, 58.59MB read
+  Socket errors: connect 755, read 97, write 0, timeout 0
+Requests/sec:   6814.66
+Transfer/sec:      0.97MB
+```
+
 ## Contributing
 
 Contributions are welcome! Please feel free to submit issues or pull requests.

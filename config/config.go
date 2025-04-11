@@ -19,6 +19,7 @@ type Config struct {
 	KeyRotationInterval time.Duration `mapstructure:"key_rotation_interval"`
 	Port                int           `mapstructure:"port"`
 	Host                string        `mapstructure:"host"`
+	KeyPoolSize         int           `mapstructure:"key_pool_size"`
 }
 
 var GlobalConfig Config
