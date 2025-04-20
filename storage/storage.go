@@ -36,4 +36,5 @@ type KeyStorage interface {
 	GetAllKeys() ([]*KeyPair, error)
 	GetKeyCount() (int, error)
 	GetRandomKey() (*KeyPair, error)
+	HasKey() (bool, error)
 }

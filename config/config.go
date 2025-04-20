@@ -13,7 +13,8 @@ type RedisConfig struct {
 }
 
 type Config struct {
-	Mode                string        `mapstructure:"mode"`
+	ChallengeStorage    string        `mapstructure:"challenge_storage"`
+	KeysStorage         string        `mapstructure:"keys_storage"`
 	Redis               RedisConfig   `mapstructure:"redis"`
 	KeyLength           int           `mapstructure:"key_length"`
 	KeyRotationInterval time.Duration `mapstructure:"key_rotation_interval"`

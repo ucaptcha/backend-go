@@ -23,16 +23,15 @@ func main() {
 	var keyStorage storage.KeyStorage
 	var challengeStorage storage.ChallengeStorage
 
-	if config.GlobalConfig.Mode == "redis" {
-		// Use Redis storage
+	if config.GlobalConfig.KeysStorage == "redis" {
 		keyStorage = storage.NewRedisKeyStorage(config.GlobalConfig.Redis)
-		challengeStorage = storage.NewRedisChallengeStorage(config.GlobalConfig.Redis)
-		log.Println("Using Redis storage")
 	} else {
-		// Use in-memory storage
 		keyStorage = storage.NewMemoryKeyStorage()
+	}
+	if config.GlobalConfig.ChallengeStorage == "redis" {
+		challengeStorage = storage.NewRedisChallengeStorage(config.GlobalConfig.Redis)
+	} else {
 		challengeStorage = storage.NewMemoryChallengeStorage()
-		log.Println("Using in-memory storage")
 	}
 
 	keyManager := keys.NewKeyManager(keyStorage, config.GlobalConfig.KeyLength)

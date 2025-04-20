@@ -36,6 +36,18 @@ func (s *RedisKeyStorage) GetKeyCount() (int, error) {
 	return len(count), nil
 }
 
+func (s *RedisKeyStorage) HasKey() (bool, error) {
+	ctx := s.client.Context()
+	iter := s.client.Scan(ctx, 0, s.prefix+"*", 0).Iterator()
+	if iter.Next(ctx) {
+		return true, nil
+	}
+	if err := iter.Err(); err != nil {
+		return false, err
+	}
+	return false, nil
+}
+
 // SaveKey stores a key pair in Redis.
 func (s *RedisKeyStorage) SaveKey(key *KeyPair) error {
 	ctx := s.client.Context()

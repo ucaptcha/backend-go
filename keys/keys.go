@@ -55,14 +55,18 @@ func (km *KeyManager) GetKey(id string) (*storage.KeyPair, error) {
 // If no keys exist, it generates a new one, saves it, and returns it.
 func (km *KeyManager) GetRandomKey() (*storage.KeyPair, error) {
 	km.keyMutex.RLock()
-	count, err := km.keyStorage.GetKeyCount()
+	// measure time
+	start := time.Now()
+	hasKey, err := km.keyStorage.HasKey()
+	elapsed := time.Since(start)
+	log.Printf("HasKey took %s", elapsed)
 	km.keyMutex.RUnlock()
 
 	if err != nil {
 		return nil, fmt.Errorf("failed to get key count: %v", err)
 	}
 
-	if count > 0 {
+	if hasKey {
 		km.keyMutex.RLock()
 		randomKey, err := km.keyStorage.GetRandomKey()
 		km.keyMutex.RUnlock()
@@ -80,9 +84,9 @@ func (km *KeyManager) GetRandomKey() (*storage.KeyPair, error) {
 	defer km.keyMutex.Unlock()
 
 	// Double-check if another goroutine generated a key while waiting for the lock
-	count, err = km.keyStorage.GetKeyCount()
+	hasKey, err = km.keyStorage.HasKey()
 	if err != nil {
-	} else if count > 0 {
+	} else if hasKey {
 		randomKey, err := km.keyStorage.GetRandomKey()
 		if err != nil {
 			return nil, fmt.Errorf("failed to get random key: %v", err)

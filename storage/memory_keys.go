@@ -18,6 +18,12 @@ func NewMemoryKeyStorage() KeyStorage {
 	}
 }
 
+func (s *MemoryKeyStorage) HasKey() (bool, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+	return len(s.keys) > 0, nil
+}
+
 // SaveKey stores a key pair in memory.
 func (s *MemoryKeyStorage) SaveKey(key *KeyPair) error {
 	s.mu.Lock()

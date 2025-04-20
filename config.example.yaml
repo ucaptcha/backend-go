@@ -1,4 +1,5 @@
-mode: "memory"  # or "redis"
+challenge_storage: "redis" 
+key_storage: "memory"
 redis:
   addr: "localhost:6379"
   password: ""
