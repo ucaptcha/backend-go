@@ -26,7 +26,8 @@ cp config.example.yaml config.yaml
 
 Example configuration (`config.yaml`):
 ```yaml
-mode: "memory"  # or "redis"
+challenge_storage: "redis" 
+key_storage: "memory"
 redis:
   addr: "localhost:6379"
   password: ""
@@ -37,12 +38,17 @@ port: 8080
 host: "0.0.0.0"
 ```
 
-- `mode`: Storage backend ("memory" or "redis")
+- `challenge_storage`: Storage mode for challenges ("memory" or "redis")
+- `key_storage`: Storage mode for keys ("memory" or "redis")
 - `redis`: Redis connection settings (only used when mode is "redis")
 - `key_length`: RSA key length in bits (recommended minimum 1536)
 - `key_rotation_interval`: Key rotation interval (e.g. "24h", "1h30m")
 - `port`: Server port
 - `host`: Server host
+
+We recommended to use `redis` for challenge, since it will automatically clean up expired challenges,
+and `memory` for key, since the performance of choosing random key for a generating a challenge
+is bad in the current Redis mode implementation.
 
 ## Usage
 
@@ -107,33 +113,111 @@ or:
 
 ## Performance
 
-Tested on M2 MacBook Air (16GB):
+Tested on M2 MacBook Air (16GB),
+with config:
+
+```yaml
+challenge_storage: "redis"
+key_storage: "memory"
+redis:
+  addr: "localhost:6379"
+  password: ""
+  db: 0
+key_length: 1024
+key_rotation_interval: "12m"
+key_pool_size: 20
+port: 8080
+host: "0.0.0.0"
+```
 
 ### `POST /challenge/`
 
+Command: `ab -n 100000 -c 128 -m POST http://127.0.0.1:8080/challenge`
+
 ```
-  16 threads and 1000 connections
-  Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency     1.61ms    2.33ms  59.91ms   90.53%
-    Req/Sec    18.64k    12.45k   49.19k    54.24%
-  2977589 requests in 20.10s, 320.88MB read
-  Socket errors: connect 755, read 72, write 0, timeout 0
-Requests/sec: 148134.29
-Transfer/sec:     15.96MB
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /challenge
+Document Length:        688 bytes
+
+Concurrency Level:      128
+Time taken for tests:   4.971 seconds
+Complete requests:      100000
+Failed requests:        34445
+   (Connect: 0, Receive: 0, Length: 34445, Exceptions: 0)
+Total transferred:      81219051 bytes
+HTML transferred:       68819051 bytes
+Requests per second:    20116.26 [#/sec] (mean)
+Time per request:       6.363 [ms] (mean)
+Time per request:       0.050 [ms] (mean, across all concurrent requests)
+Transfer rate:          15955.30 [Kbytes/sec] received
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.6      0      94
+Processing:     1    6   4.2      6     101
+Waiting:        1    6   4.2      6     101
+Total:          1    6   4.3      6     102
+
+Percentage of the requests served within a certain time (ms)
+  50%      6
+  66%      6
+  75%      7
+  80%      7
+  90%      7
+  95%      8
+  98%      9
+  99%     13
+ 100%    102 (longest request)
 ```
 
 
 ### `POST /challenge/:id/validation`
 
+Command: `ab -n 100000 -c 128 -m POST -p post.txt http://127.0.0.1:8080/challenge/4082e12d-7e60-8a4c-36d8-7bacd1a94500/validation`
+
+> Temporiarily disabled deletion for verified challenges, and mocked an incorrect answer for the challenge. (So the test will always fail)
+
 ```
-  16 threads and 1000 connections
-  Thread Stats   Avg      Stdev     Max   +/- Stdev
-    Latency    34.73ms   10.04ms 209.87ms   79.99%
-    Req/Sec   623.34    332.84     2.04k    80.63%
-  409586 requests in 1.00m, 58.59MB read
-  Socket errors: connect 755, read 97, write 0, timeout 0
-Requests/sec:   6814.66
-Transfer/sec:      0.97MB
+Server Hostname:        127.0.0.1
+Server Port:            8080
+
+Document Path:          /challenge/4082e12d-7e60-8a4c-36d8-7bacd1a94500/validation
+Document Length:        17 bytes
+
+Concurrency Level:      128
+Time taken for tests:   8.069 seconds
+Complete requests:      100000
+Failed requests:        0
+Non-2xx responses:      100000
+Total transferred:      15000000 bytes
+Total body sent:        50600000
+HTML transferred:       1700000 bytes
+Requests per second:    12392.66 [#/sec] (mean)
+Time per request:       10.329 [ms] (mean)
+Time per request:       0.081 [ms] (mean, across all concurrent requests)
+Transfer rate:          1815.33 [Kbytes/sec] received
+                        6123.72 kb/s sent
+                        7939.05 kb/s total
+
+Connection Times (ms)
+              min  mean[+/-sd] median   max
+Connect:        0    0   0.2      0      26
+Processing:     1   10   3.8     10      52
+Waiting:        1   10   3.8     10      52
+Total:          1   10   3.8     10      54
+
+Percentage of the requests served within a certain time (ms)
+  50%     10
+  66%     11
+  75%     12
+  80%     12
+  90%     14
+  95%     15
+  98%     18
+  99%     21
+ 100%     54 (longest request)
 ```
 
 ## Contributing
