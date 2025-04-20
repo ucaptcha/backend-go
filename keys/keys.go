@@ -5,7 +5,6 @@ import (
 	"crypto/rsa"
 	"fmt"
 	"log"
-	mrand "math/rand"
 	"sync"
 	"time"
 
@@ -55,18 +54,25 @@ func (km *KeyManager) GetKey(id string) (*storage.KeyPair, error) {
 // GetRandomKey retrieves a random key from storage.
 // If no keys exist, it generates a new one, saves it, and returns it.
 func (km *KeyManager) GetRandomKey() (*storage.KeyPair, error) {
-	km.keyMutex.RLock() // Use RLock first for reading keys
-	allKeys, err := km.keyStorage.GetAllKeys()
+	km.keyMutex.RLock()
+	count, err := km.keyStorage.GetKeyCount()
 	km.keyMutex.RUnlock()
 
 	if err != nil {
-		return nil, fmt.Errorf("failed to get all keys: %v", err)
+		return nil, fmt.Errorf("failed to get key count: %v", err)
 	}
 
-	if len(allKeys) > 0 {
-		mrand.Seed(time.Now().UnixNano()) // Ensure randomness
-		randomIndex := mrand.Intn(len(allKeys))
-		return allKeys[randomIndex], nil
+	if count > 0 {
+		km.keyMutex.RLock()
+		randomKey, err := km.keyStorage.GetRandomKey()
+		km.keyMutex.RUnlock()
+
+		if err != nil {
+			return nil, fmt.Errorf("failed to get random key: %v", err)
+		}
+		if randomKey != nil {
+			return randomKey, nil
+		}
 	}
 
 	// No keys found, need to generate one. Acquire write lock.
@@ -74,15 +80,16 @@ func (km *KeyManager) GetRandomKey() (*storage.KeyPair, error) {
 	defer km.keyMutex.Unlock()
 
 	// Double-check if another goroutine generated a key while waiting for the lock
-	allKeys, err = km.keyStorage.GetAllKeys()
+	count, err = km.keyStorage.GetKeyCount()
 	if err != nil {
-		// Log this error, but proceed to generate a key as a fallback
-		log.Printf("Warning: Failed to re-check keys after acquiring lock: %v", err)
-	} else if len(allKeys) > 0 {
-		// Another goroutine created a key, use that one
-		mrand.Seed(time.Now().UnixNano())
-		randomIndex := mrand.Intn(len(allKeys))
-		return allKeys[randomIndex], nil
+	} else if count > 0 {
+		randomKey, err := km.keyStorage.GetRandomKey()
+		if err != nil {
+			return nil, fmt.Errorf("failed to get random key: %v", err)
+		}
+		if randomKey != nil {
+			return randomKey, nil
+		}
 	}
 
 	// Still no keys, generate, save, and return a new one
@@ -94,9 +101,7 @@ func (km *KeyManager) GetRandomKey() (*storage.KeyPair, error) {
 
 	err = km.keyStorage.SaveKey(newKey)
 	if err != nil {
-		// Log the save error, but return the generated key anyway if needed elsewhere
 		log.Printf("Warning: Failed to save newly generated key: %v", err)
-		// Depending on requirements, you might want to return an error here instead
 	}
 
 	return newKey, nil

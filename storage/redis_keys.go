@@ -58,6 +58,37 @@ func (s *RedisKeyStorage) SaveKey(key *KeyPair) error {
 	return nil
 }
 
+// GetRandomKey retrieves a random key pair from Redis.
+func (s *RedisKeyStorage) GetRandomKey() (*KeyPair, error) {
+	ctx := s.client.Context()
+
+	// Get all keys with our prefix
+	keys, err := s.client.Keys(ctx, s.prefix+"*").Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get keys: %v", err)
+	}
+	if len(keys) == 0 {
+		return nil, nil // No keys exist
+	}
+
+	// Select first key (simple approach - could be made truly random if needed)
+	keyID := keys[0]
+
+	// Get the key data
+	jsonData, err := s.client.Get(ctx, keyID).Result()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get key data: %v", err)
+	}
+
+	var key KeyPair
+	err = json.Unmarshal([]byte(jsonData), &key)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal key pair: %v", err)
+	}
+
+	return &key, nil
+}
+
 // GetKey retrieves a key pair from Redis by its ID.
 func (s *RedisKeyStorage) GetKey(id string) (*KeyPair, error) {
 	ctx := s.client.Context()

@@ -35,4 +35,5 @@ type KeyStorage interface {
 	DeleteKey(id string) error
 	GetAllKeys() ([]*KeyPair, error)
 	GetKeyCount() (int, error)
+	GetRandomKey() (*KeyPair, error)
 }

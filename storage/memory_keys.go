@@ -29,6 +29,23 @@ func (s *MemoryKeyStorage) SaveKey(key *KeyPair) error {
 	return nil
 }
 
+// GetRandomKey retrieves a random key pair from memory.
+func (s *MemoryKeyStorage) GetRandomKey() (*KeyPair, error) {
+	s.mu.RLock()
+	defer s.mu.RUnlock()
+
+	if len(s.keys) == 0 {
+		return nil, nil
+	}
+
+	// Get a random key from the map
+	for _, key := range s.keys {
+		return key, nil
+	}
+
+	return nil, nil
+}
+
 // GetKey retrieves a key pair from memory by its ID.
 func (s *MemoryKeyStorage) GetKey(id string) (*KeyPair, error) {
 	s.mu.RLock()
