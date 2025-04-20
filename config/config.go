@@ -21,6 +21,7 @@ type Config struct {
 	Port                int           `mapstructure:"port"`
 	Host                string        `mapstructure:"host"`
 	KeyPoolSize         int           `mapstructure:"key_pool_size"`
+	Difficulty          int64         `mapstructure:"difficulty"`
 }
 
 var GlobalConfig Config

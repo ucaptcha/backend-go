@@ -5,6 +5,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/ucaptcha/backend-go/challenge"
+	"github.com/ucaptcha/backend-go/config"
 )
 
 type ChallengeResponse struct {
@@ -23,6 +24,7 @@ func SetupRouter() *gin.Engine {
 
 	r.POST("/challenge", createChallengeHandler)
 	r.POST("/challenge/:id/validation", verifyChallengeHandler)
+	r.PUT("/difficulty", updateDifficultyHandler)
 
 	return r
 }
@@ -67,4 +69,19 @@ func verifyChallengeHandler(c *gin.Context) {
 	default:
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unknown error"})
 	}
+}
+
+type DifficultyRequest struct {
+	Difficulty int64 `json:"difficulty"`
+}
+
+func updateDifficultyHandler(c *gin.Context) {
+	var req DifficultyRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+
+	config.GlobalConfig.Difficulty = req.Difficulty
+	c.JSON(http.StatusOK, gin.H{"success": true, "difficulty": req.Difficulty})
 }

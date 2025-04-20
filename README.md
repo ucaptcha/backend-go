@@ -5,37 +5,42 @@ A backend implementation of the μCaptcha system written in Go.
 ## Installation
 
 1. Clone the repository:
-```bash
-git clone https://github.com/ucaptcha/backend-go.git
-cd backend-go
-```
+
+    ```bash
+    git clone https://github.com/ucaptcha/backend-go.git
+    cd backend-go
+    ```
 
 2. Install dependencies:
-```bash
-go mod download
-```
+
+    ```bash
+    go mod download
+    ```
 
 3. Copy the example config:
-```bash
-cp config.example.yaml config.yaml
-```
+
+    ```bash
+    cp config.example.yaml config.yaml
+    ```
 
 4. Edit `config.yaml` with your settings.
 
 ## Configuration
 
 Example configuration (`config.yaml`):
+
 ```yaml
-challenge_storage: "redis" 
+challenge_storage: "redis"
 key_storage: "memory"
 redis:
-  addr: "localhost:6379"
-  password: ""
-  db: 0
+    addr: "localhost:6379"
+    password: ""
+    db: 0
 key_length: 1536
 key_rotation_interval: "24h"
 port: 8080
 host: "0.0.0.0"
+difficulty: 100000
 ```
 
 - `challenge_storage`: Storage mode for challenges ("memory" or "redis")
@@ -45,6 +50,7 @@ host: "0.0.0.0"
 - `key_rotation_interval`: Key rotation interval (e.g. "24h", "1h30m")
 - `port`: Server port
 - `host`: Server host
+- `difficulty`: The initial difficulty of the challenge
 
 We recommended to use `redis` for challenge, since it will automatically clean up expired challenges,
 and `memory` for key, since the performance of choosing random key for a generating a challenge
@@ -53,6 +59,7 @@ is bad in the current Redis mode implementation.
 ## Usage
 
 Run the server:
+
 ```bash
 go run main.go
 ```
@@ -60,11 +67,13 @@ go run main.go
 ## API Documentation
 
 ### Generate Challenge
+
 `POST /challenge`
 
 Generates a new captcha challenge.
 
 **Example Response:**
+
 ```json
 {
     "id": "8756d5cc-d3fc-35a7-940f-1e388c9f0df8",
@@ -82,24 +91,28 @@ In which:
 - `t`: Challenge difficulty
 
 ### Verify Solution
+
 `POST /challenge/:id/validation`
 
 Verifies a captcha solution.
 
 **Route Parameters:**
+
 - `id`: Challenge ID
 
 **Request:**
+
 ```json
 {
-  "y": "the answer calculated by client",
+    "y": "the answer calculated by client"
 }
 ```
 
 **Response:**
+
 ```json
 {
-  "success": true
+    "success": true
 }
 ```
 
@@ -108,6 +121,26 @@ or:
 ```json
 {
     "error": "Challenge not found"
+}
+```
+
+### Update Difficulty
+
+`PUT /difficulty`
+Updates the difficulty configuration.
+
+```json
+{
+    "difficulty": 1000000
+}
+```
+
+**Response:**
+
+````json
+{
+    "difficulty": 1000000,
+    "success": true
 }
 ```
 
@@ -128,13 +161,13 @@ key_rotation_interval: "12m"
 key_pool_size: 20
 port: 8080
 host: "0.0.0.0"
-```
+````
 
 ### `POST /challenge/`
 
 Command: `ab -n 100000 -c 128 -m POST http://127.0.0.1:8080/challenge`
 
-```
+```text
 Server Hostname:        127.0.0.1
 Server Port:            8080
 
@@ -172,14 +205,13 @@ Percentage of the requests served within a certain time (ms)
  100%    102 (longest request)
 ```
 
-
 ### `POST /challenge/:id/validation`
 
 Command: `ab -n 100000 -c 128 -m POST -p post.txt http://127.0.0.1:8080/challenge/4082e12d-7e60-8a4c-36d8-7bacd1a94500/validation`
 
 > Temporiarily disabled deletion for verified challenges, and mocked an incorrect answer for the challenge. (So the test will always fail)
 
-```
+```text
 Server Hostname:        127.0.0.1
 Server Port:            8080
 
