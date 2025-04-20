@@ -7,14 +7,14 @@ import (
 	"github.com/ucaptcha/backend-go/types"
 )
 
-// MemoryStorage is an in-memory implementation of the Storage interface.
+// MemoryStorage is an in-memory implementation of the ChallengeStorage interface.
 type MemoryStorage struct {
 	challenges map[string]*types.Challenge
 	mu         sync.Mutex
 }
 
-// NewMemoryStorage creates a new MemoryStorage instance.
-func NewMemoryStorage() *MemoryStorage {
+// NewMemoryChallengeStorage creates a new MemoryStorage instance.
+func NewMemoryChallengeStorage() ChallengeStorage {
 	return &MemoryStorage{
 		challenges: make(map[string]*types.Challenge),
 	}

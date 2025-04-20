@@ -10,13 +10,13 @@ import (
 	"github.com/ucaptcha/backend-go/types"
 )
 
-// RedisStorage is a Redis implementation of the Storage interface.
+// RedisStorage is a Redis implementation of the ChallengeStorage interface.
 type RedisStorage struct {
 	client *redis.Client
 }
 
-// NewRedisStorage creates a new RedisStorage instance.
-func NewRedisStorage(cfg config.RedisConfig) *RedisStorage {
+// NewRedisChallengeStorage creates a new RedisStorage instance.
+func NewRedisChallengeStorage(cfg config.RedisConfig) ChallengeStorage {
 	client := redis.NewClient(&redis.Options{
 		Addr:     cfg.Addr,
 		Password: cfg.Password,
@@ -28,14 +28,14 @@ func NewRedisStorage(cfg config.RedisConfig) *RedisStorage {
 // Save stores a challenge in Redis.
 func (s *RedisStorage) Save(ch *types.Challenge) error {
 	ctx := s.client.Context()
-	key := fmt.Sprintf("ucaptcha:%s", ch.ID)
+	key := fmt.Sprintf("ucaptcha:challenge:%s", ch.ID)
 	err := s.client.HSet(ctx, key,
+		"id", ch.ID,
+		"KeyID", ch.KeyID,
 		"g", ch.G.String(),
 		"n", ch.N.String(),
 		"t", ch.T,
 		"created_at", ch.CreatedAt.Format(time.RFC3339),
-		"p", ch.P.String(),
-		"q", ch.Q.String(),
 	).Err()
 	if err != nil {
 		return err
@@ -47,7 +47,7 @@ func (s *RedisStorage) Save(ch *types.Challenge) error {
 // Get retrieves a challenge from Redis by its ID.
 func (s *RedisStorage) Get(id string) (*types.Challenge, error) {
 	ctx := s.client.Context()
-	key := fmt.Sprintf("ucaptcha:%s", id)
+	key := fmt.Sprintf("ucaptcha:challenge:%s", id)
 	result, err := s.client.HGetAll(ctx, key).Result()
 	if err != nil {
 		return nil, err
@@ -60,8 +60,6 @@ func (s *RedisStorage) Get(id string) (*types.Challenge, error) {
 	n, _ := new(big.Int).SetString(result["n"], 10)
 	t, _ := new(big.Int).SetString(result["t"], 10)
 	createdAt, _ := time.Parse(time.RFC3339, result["created_at"])
-	p, _ := new(big.Int).SetString(result["p"], 10)
-	q, _ := new(big.Int).SetString(result["q"], 10)
 
 	return &types.Challenge{
 		ID:        id,
@@ -69,14 +67,13 @@ func (s *RedisStorage) Get(id string) (*types.Challenge, error) {
 		N:         n,
 		T:         t.Int64(),
 		CreatedAt: createdAt,
-		P:         p,
-		Q:         q,
+		KeyID:     result["KeyID"],
 	}, nil
 }
 
 // Delete removes a challenge from Redis by its ID.
 func (s *RedisStorage) Delete(id string) error {
 	ctx := s.client.Context()
-	key := fmt.Sprintf("ucaptcha:%s", id)
+	key := fmt.Sprintf("ucaptcha:challenge:%s", id)
 	return s.client.Del(ctx, key).Err()
 }

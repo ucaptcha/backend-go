@@ -9,9 +9,8 @@ import (
 type Challenge struct {
 	ID        string
 	G         *big.Int
-	N         *big.Int
-	T         int64 // Difficulty (number of iterations)
+	N         *big.Int // N is still needed for generating g, but P/Q are not
+	T         int64    // Difficulty (number of iterations)
 	CreatedAt time.Time
-	P         *big.Int // Store p and q for verification
-	Q         *big.Int
+	KeyID     string // Reference to the key used for this challenge
 }

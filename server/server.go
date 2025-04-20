@@ -50,7 +50,11 @@ func verifyChallengeHandler(c *gin.Context) {
 		return
 	}
 
-	result := challenge.VerifyChallenge(id, req.Y)
+	result, err := challenge.VerifyChallenge(id, req.Y)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 	switch result {
 	case 1:
 		c.JSON(http.StatusOK, gin.H{"success": true})
@@ -58,6 +62,8 @@ func verifyChallengeHandler(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"success": false})
 	case 2:
 		c.JSON(http.StatusNotFound, gin.H{"error": "Challenge not found"})
+	case 4:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Key not found"})
 	default:
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Unknown error"})
 	}
