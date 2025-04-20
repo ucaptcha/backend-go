@@ -56,14 +56,7 @@ func VerifyChallenge(id string, yStr string) (int8, error) {
 
 // NewChallenge creates and stores a new challenge.
 func (cm *ChallengeManager) NewChallenge() (*types.Challenge, error) {
-	// Record the start time
-	startTime := time.Now()
-
 	keyPair, err := cm.keyManager.GetRandomKey()
-
-	// Calculate the elapsed time
-	elapsedTime := time.Since(startTime)
-	fmt.Printf("GetRandomKey took %v to execute\n", elapsedTime)
 
 	if err != nil {
 		return nil, fmt.Errorf("error getting random key: %v", err)
