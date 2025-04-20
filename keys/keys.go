@@ -55,11 +55,7 @@ func (km *KeyManager) GetKey(id string) (*storage.KeyPair, error) {
 // If no keys exist, it generates a new one, saves it, and returns it.
 func (km *KeyManager) GetRandomKey() (*storage.KeyPair, error) {
 	km.keyMutex.RLock()
-	// measure time
-	start := time.Now()
 	hasKey, err := km.keyStorage.HasKey()
-	elapsed := time.Since(start)
-	log.Printf("HasKey took %s", elapsed)
 	km.keyMutex.RUnlock()
 
 	if err != nil {
