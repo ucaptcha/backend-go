@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/ucaptcha/backend-go/config"
 	"github.com/ucaptcha/backend-go/keys"
 	"github.com/ucaptcha/backend-go/storage"
 	"github.com/ucaptcha/backend-go/types"
@@ -39,11 +40,11 @@ func InitializeStorage(cs storage.ChallengeStorage, km *keys.KeyManager) {
 }
 
 // NewChallenge creates a new challenge using the global manager.
-func NewChallenge() (*types.Challenge, error) {
+func NewChallenge(difficulty ...int64) (*types.Challenge, error) {
 	if globalManager == nil {
 		return nil, fmt.Errorf("challenge storage not initialized")
 	}
-	return globalManager.NewChallenge()
+	return globalManager.NewChallenge(difficulty...)
 }
 
 // VerifyChallenge verifies a challenge using the global manager.
@@ -55,7 +56,7 @@ func VerifyChallenge(id string, yStr string) (int8, error) {
 }
 
 // NewChallenge creates and stores a new challenge.
-func (cm *ChallengeManager) NewChallenge() (*types.Challenge, error) {
+func (cm *ChallengeManager) NewChallenge(difficulty ...int64) (*types.Challenge, error) {
 	keyPair, err := cm.keyManager.GetRandomKey()
 
 	if err != nil {
@@ -69,13 +70,18 @@ func (cm *ChallengeManager) NewChallenge() (*types.Challenge, error) {
 	challengeID := GenerateRandomID()
 	// N is still needed for generating g, which is part of the public challenge
 	g := GenerateValidG(keyPair.Components.N)
-	difficulty := int64(1000000) // Example difficulty, consider making this configurable
+
+	// Set difficulty to the provided value or use the default
+	var diff int64 = config.GlobalConfig.Difficulty // Default difficulty
+	if len(difficulty) > 0 {
+		diff = difficulty[0]
+	}
 
 	challenge := &types.Challenge{
 		ID:        challengeID,
 		G:         g,
 		N:         keyPair.Components.N, // N is public
-		T:         difficulty,
+		T:         diff,
 		CreatedAt: time.Now(),
 		KeyID:     keyPair.ID, // Store KeyID instead of P, Q
 	}

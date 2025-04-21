@@ -19,6 +19,10 @@ type VerifyRequest struct {
 	Y string `json:"y"`
 }
 
+type ChallengeRequest struct {
+	Difficulty *int64 `json:"difficulty,omitempty"`
+}
+
 func SetupRouter() *gin.Engine {
 	r := gin.Default()
 
@@ -30,7 +34,22 @@ func SetupRouter() *gin.Engine {
 }
 
 func createChallengeHandler(c *gin.Context) {
-	ch, err := challenge.NewChallenge()
+	var req ChallengeRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		ch, err := challenge.NewChallenge()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, ChallengeResponse{
+			ID: ch.ID,
+			G:  ch.G.String(),
+			N:  ch.N.String(),
+			T:  ch.T,
+		})
+		return
+	}
+	ch, err := challenge.NewChallenge(*req.Difficulty)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
