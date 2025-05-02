@@ -4,6 +4,23 @@ A backend implementation of the μCaptcha system written in Go.
 
 ## Installation
 
+### Docker
+
+1. Pull the Docker image:
+
+    ```bash
+    docker pull alikia2x/ucaptcha-backend
+    ```
+
+2. Prepare the config file: copy the `config.example.yaml` to `/path/to/your/config.yaml` and edit it with your settings.
+3. Run the container:
+
+    ```bash
+    docker run -d -p 8080:8080 -v /path/to/your/config.yaml:/app/config.yaml alikia2x/ucaptcha-backend
+    ```
+
+### Manual Build
+
 1. Clone the repository:
 
     ```bash
