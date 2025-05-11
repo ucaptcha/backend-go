@@ -154,7 +154,7 @@ Updates the difficulty configuration.
 
 **Response:**
 
-````json
+```json
 {
     "difficulty": 1000000,
     "success": true
