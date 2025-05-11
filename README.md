@@ -1,10 +1,10 @@
 # μCaptcha Backend
 
-A backend implementation of the μCaptcha system written in Go.
+This is a backend implementation of the μCaptcha system, written in Go.
 
 ## Installation
 
-### Docker
+### Using Docker
 
 1. Pull the Docker image:
 
@@ -12,7 +12,8 @@ A backend implementation of the μCaptcha system written in Go.
     docker pull alikia2x/ucaptcha-backend
     ```
 
-2. Prepare the config file: copy the `config.example.yaml` to `/path/to/your/config.yaml` and edit it with your settings.
+2. Prepare the configuration file: Copy `config.example.yaml` to `/path/to/your/config.yaml` and modify it according to your settings.
+
 3. Run the container:
 
     ```bash
@@ -34,17 +35,17 @@ A backend implementation of the μCaptcha system written in Go.
     go mod download
     ```
 
-3. Copy the example config:
+3. Copy the example configuration:
 
     ```bash
     cp config.example.yaml config.yaml
     ```
 
-4. Edit `config.yaml` with your settings.
+4. Edit `config.yaml` to suit your needs.
 
 ## Configuration
 
-Example configuration (`config.yaml`):
+Here is an example configuration (`config.yaml`):
 
 ```yaml
 challenge_storage: "redis"
@@ -60,22 +61,22 @@ host: "0.0.0.0"
 difficulty: 100000
 ```
 
-- `challenge_storage`: Storage mode for challenges ("memory" or "redis")
-- `key_storage`: Storage mode for keys ("memory" or "redis")
-- `redis`: Redis connection settings (only used when mode is "redis")
-- `key_length`: RSA key length in bits (recommended minimum 1536)
-- `key_rotation_interval`: Key rotation interval (e.g. "24h", "1h30m")
-- `port`: Server port
-- `host`: Server host
-- `difficulty`: The initial difficulty of the challenge
+### Configuration Options
 
-We recommended to use `redis` for challenge, since it will automatically clean up expired challenges,
-and `memory` for key, since the performance of choosing random key for a generating a challenge
-is bad in the current Redis mode implementation.
+- `challenge_storage`: Mode for storing challenges ("memory" or "redis").
+- `key_storage`: Mode for storing keys ("memory" or "redis").
+- `redis`: Redis connection settings (applicable only when using "redis").
+- `key_length`: RSA key length in bits (recommended minimum is 1536).
+- `key_rotation_interval`: Interval for key rotation (e.g., "24h", "1h30m").
+- `port`: Port for the server.
+- `host`: Host for the server.
+- `difficulty`: Initial difficulty level of the challenge.
+
+We recommend using `redis` for challenge storage, as it automatically cleans up expired challenges, and `memory` for key storage, since the current Redis implementation has performance issues when selecting random keys for challenge generation.
 
 ## Usage
 
-Run the server:
+To run the server, execute:
 
 ```bash
 go run main.go
@@ -83,88 +84,102 @@ go run main.go
 
 ## API Documentation
 
-### Generate Challenge
+Note: An [OpenAPI specification](api-doc.yaml) is also available.
 
-`POST /challenge`
+**IMPORTANT:** This API **should not** be directly exposed to the public. You must integrate it into your own backend code and implement additional features as needed (e.g., dynamic difficulty, rate limiting, etc.).
 
-Generates a new captcha challenge.
+### 1. Creating a Challenge
 
-**Example Response:**
+`POST` `/challenge`
 
-```json
-{
-    "id": "8756d5cc-d3fc-35a7-940f-1e388c9f0df8",
-    "g": "77642905874398787632272558597266110899559428963277249926018544312322752",
-    "n": "950959592177192295820512556855602325965163906380534204976341268132239",
-    "t": 1000000
-}
-```
+To obtain a new captcha challenge, send a `POST` request to the `/challenge` endpoint. You can optionally specify the `difficulty` in the JSON body.
 
-In which:
-
-- `id`: Challenge ID
-- `g`: The input `g` of the VDF function
-- `n`: The public key `N` of the RSA key
-- `t`: Challenge difficulty
-
-### Verify Solution
-
-`POST /challenge/:id/validation`
-
-Verifies a captcha solution.
-
-**Route Parameters:**
-
-- `id`: Challenge ID
-
-**Request:**
+**Example Request (with difficulty):**
 
 ```json
 {
-    "y": "the answer calculated by client"
+    "difficulty": 100000
 }
 ```
 
-**Response:**
+**Successful Response (HTTP 201):**
 
 ```json
 {
-    "success": true
+    "success": true,
+    "id": "dqfUjQbmpT",
+    "g": "6806008247175178...254",
+    "n": "1087355592116148...087",
+    "t": 100000
 }
 ```
 
-or:
+You can pass this response to the client. The client will need the `g`, `n`, and `t` values to solve the challenge. Remember to store the `id` for later validation.
+
+### 2. Verifying the Answer
+
+`POST` `/challenge/{id}/validation`
+
+After the client solves the challenge, send their answer (`y`) in a `POST` request to `/challenge/{id}/validation`, replacing `{id}` with the challenge ID you received earlier.
+
+**Example Request:**
+
+`POST /challenge/dqfUjQbmpT/validation`
 
 ```json
 {
-    "error": "Challenge not found"
+  "y": "32341712...9832"
 }
 ```
 
-### Update Difficulty
-
-`PUT /difficulty`
-Updates the difficulty configuration.
+**Successful Response (HTTP 200 - Correct Answer):**
 
 ```json
 {
-    "difficulty": 1000000
+  "success": true
 }
 ```
 
-**Response:**
+**Incorrect Answer Response (HTTP 401):**
 
-````json
+```json
 {
-    "difficulty": 1000000,
-    "success": true
+  "success": false
+}
+```
+
+**Other Possible Responses:**
+
+- `400`: Invalid format in your request.
+- `404`: The provided `id` does not exist.
+- `500`: An error occurred on the server.
+
+### 3. Changing Default Difficulty
+
+`PUT` `/difficulty`
+
+You can change the default difficulty for new challenges by sending a `PUT` request to `/difficulty` with the desired `difficulty` in the body.
+
+**Example Request:**
+
+```json
+{
+  "difficulty": 200000
+}
+```
+
+**Successful Response (HTTP 200):**
+
+```json
+{
+  "success": true,
+  "difficulty": 200000
 }
 ```
 
 ## Performance
 
-Tested on M2 MacBook Air (16GB),
-with config:
+Tested on an M2 MacBook Air (16GB) with the following configuration:
 
 ```yaml
 challenge_storage: "redis"
@@ -178,11 +193,19 @@ key_rotation_interval: "12m"
 key_pool_size: 20
 port: 8080
 host: "0.0.0.0"
-````
+```
 
-### `POST /challenge/`
+### Performance Testing Results
 
-Command: `ab -n 100000 -c 128 -m POST http://127.0.0.1:8080/challenge`
+#### `POST /challenge/`
+
+Command used for testing:
+
+```bash
+ab -n 100000 -c 128 -m POST http://127.0.0.1:8080/challenge
+```
+
+**Results:**
 
 ```text
 Server Hostname:        127.0.0.1
@@ -222,11 +245,17 @@ Percentage of the requests served within a certain time (ms)
  100%    102 (longest request)
 ```
 
-### `POST /challenge/:id/validation`
+#### `POST /challenge/{id}/validation`
 
-Command: `ab -n 100000 -c 128 -m POST -p post.txt http://127.0.0.1:8080/challenge/4082e12d-7e60-8a4c-36d8-7bacd1a94500/validation`
+Command used for testing:
 
-> Temporiarily disabled deletion for verified challenges, and mocked an incorrect answer for the challenge. (So the test will always fail)
+```bash
+ab -n 100000 -c 128 -m POST -p post.txt http://127.0.0.1:8080/challenge/4082e12d-7e60-8a4c-36d8-7bacd1a94500/validation
+```
+
+> Note: Deletion for verified challenges is temporarily disabled, and an incorrect answer is mocked for the challenge, ensuring that the test will always fail.
+
+**Results:**
 
 ```text
 Server Hostname:        127.0.0.1
@@ -271,8 +300,8 @@ Percentage of the requests served within a certain time (ms)
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit issues or pull requests.
+We welcome contributions! If you have suggestions, bug reports, or would like to submit a pull request, please feel free to do so. Your input helps improve the μCaptcha system.
 
 ## License
 
-MIT - See [LICENSE](LICENSE).
+This project is licensed under the MIT License. For more details, please refer to the [LICENSE](LICENSE) file.

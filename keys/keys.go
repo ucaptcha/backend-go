@@ -8,7 +8,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/google/uuid"
+	"github.com/ucaptcha/backend-go/lib"
 	"github.com/ucaptcha/backend-go/storage"
 )
 
@@ -34,7 +34,7 @@ func generateNewKey(keyLength int) (*storage.KeyPair, error) {
 		return nil, err
 	}
 
-	keyID := uuid.New().String()
+	keyID := lib.GenerateRandomID()
 	return &storage.KeyPair{
 		ID: keyID,
 		Components: storage.RSAComponents{

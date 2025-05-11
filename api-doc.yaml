@@ -1,0 +1,218 @@
+openapi: 3.1.0
+info:
+  title: uCaptcha
+  version: 2.0.0
+tags: []
+paths:
+  /challenge/{id}/validation:
+    post:
+      summary: Verify a challenge
+      deprecated: false
+      description: 'Verify a given challenge'
+      tags: []
+      parameters:
+        - name: id
+          in: path
+          description: 'The id of the challenge'
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                'y':
+                  type: string
+                  description: The answer calculated by client
+      responses:
+        '200':
+          description: 'Answer correct'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                required:
+                  - success
+          headers: {}
+        '400':
+          description: 'Invalid format'
+          content:
+            application/json:
+              schema:
+                title: ''
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                required:
+                  - success
+                  - error
+          headers: {}
+        '401':
+          description: 'Answer incorrect'
+          content:
+            application/json:
+              schema:
+                title: ''
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                required:
+                  - success
+          headers: {}
+        '404':
+          description: 'Challenge not found'
+          content:
+            application/json:
+              schema:
+                title: ''
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                required:
+                  - success
+                  - error
+          headers: {}
+        '500':
+          description: 'Error'
+          content:
+            application/json:
+              schema:
+                title: ''
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                required:
+                  - success
+          headers: {}
+      security: []
+  /challenge:
+    post:
+      summary: Create a new challenge
+      deprecated: false
+      description: ''
+      tags: []
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                difficulty:
+                  type: number
+                  description: The difficulty of the challenge
+      responses:
+        '201':
+          description: 'Successfully created'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  id:
+                    type: string
+                    description: Challenge ID
+                  g:
+                    type: string
+                    description: The input g of the VDF function
+                  'n':
+                    type: string
+                    description: The public key `N` of the RSA key
+                  t:
+                    type: number
+                    description: Challenge difficulty
+                required:
+                  - id
+                  - g
+                  - 'n'
+                  - t
+                  - success
+          headers: {}
+        '400':
+          description: 'Invalid format'
+          content:
+            application/json:
+              schema:
+                title: ''
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                required:
+                  - error
+                  - success
+          headers: {}
+      security: []
+  /difficulty:
+    put:
+      summary: Change default difficulty
+      deprecated: false
+      description: ''
+      tags: []
+      parameters: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                difficulty:
+                  type: number
+              required:
+                - difficulty
+      responses:
+        '200':
+          description: 'Success'
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  difficulty:
+                    type: number
+                required:
+                  - success
+                  - difficulty
+          headers: {}
+        '400':
+          description: 'Invalid format'
+          content:
+            application/json:
+              schema:
+                title: ''
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  error:
+                    type: string
+                required:
+                  - success
+                  - error
+          headers: {}
+      security: []
+components:
+  schemas: {}
+  securitySchemes: {}
+servers: []

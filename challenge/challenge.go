@@ -8,6 +8,7 @@ import (
 
 	"github.com/ucaptcha/backend-go/config"
 	"github.com/ucaptcha/backend-go/keys"
+	"github.com/ucaptcha/backend-go/lib"
 	"github.com/ucaptcha/backend-go/storage"
 	"github.com/ucaptcha/backend-go/types"
 )
@@ -67,9 +68,9 @@ func (cm *ChallengeManager) NewChallenge(difficulty ...int64) (*types.Challenge,
 		return nil, fmt.Errorf("no active keys available, generation failed")
 	}
 
-	challengeID := GenerateRandomID()
+	challengeID := lib.GenerateRandomID()
 	// N is still needed for generating g, which is part of the public challenge
-	g := GenerateValidG(keyPair.Components.N)
+	g := lib.GenerateValidG(keyPair.Components.N)
 
 	// Set difficulty to the provided value or use the default
 	var diff int64 = config.GlobalConfig.Difficulty // Default difficulty
@@ -106,17 +107,13 @@ func (cm *ChallengeManager) GetChallenge(id string) (*types.Challenge, error) {
 func (cm *ChallengeManager) VerifyChallenge(id string, yStr string) (int8, error) {
 	challenge, err := cm.challengeStorage.Get(id)
 	if err != nil {
-		// Consider logging the error
-		return 2, fmt.Errorf("challenge not found: %s, error: %v", id, err) // Challenge not found
+		return 2, fmt.Errorf("could not found challenge: %s", id) // Challenge not found
 	}
-	// Optional: Delete the challenge after verification attempt?
-	// defer cm.challengeStorage.Delete(id)
 
 	// Retrieve the key used for this challenge
 	keyPair, err := cm.keyManager.GetKey(challenge.KeyID)
 	if err != nil {
-		// Key associated with the challenge is missing, this is a critical error
-		return 4, fmt.Errorf("key %s for challenge %s not found: %v", challenge.KeyID, id, err) // Key not found
+		return 4, fmt.Errorf("required key %s for challenge %s is missing, consider re-generating challenge", challenge.KeyID, id)
 	}
 
 	y := new(big.Int)

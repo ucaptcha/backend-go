@@ -1,9 +1,9 @@
-package challenge
+package lib
 
 import (
 	"crypto/rand"
-	"fmt"
 	"math/big"
+	"strings"
 )
 
 // GenerateRandomBigInt generates a random big.Int within the specified range [min, max].
@@ -49,11 +49,17 @@ func GenerateValidG(N *big.Int) *big.Int {
 
 // GenerateRandomID generates a unique random ID.
 func GenerateRandomID() string {
-	b := make([]byte, 16)
+	const length = 10
+	const allowedChars = "abcdefghijkmnpqrstuvwxyz23456789ABCDEFGHJKLMNPQRSTUVWXYZ"
+	const allowedCharsLen = len(allowedChars)
+	b := make([]byte, length)
 	_, err := rand.Read(b)
 	if err != nil {
-		panic(err) // Handle error appropriately
+		panic(err)
 	}
-	return fmt.Sprintf("%x-%x-%x-%x-%x",
-		b[0:4], b[4:6], b[6:8], b[8:10], b[10:])
+	var sb strings.Builder
+	for _, byteVal := range b {
+		sb.WriteByte(allowedChars[int(byteVal)%allowedCharsLen])
+	}
+	return sb.String()
 }
